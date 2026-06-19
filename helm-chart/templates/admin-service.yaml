@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.services.admin.name }}
+  namespace: {{ .Values.global.namespace }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.services.admin.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.services.admin.name }}
+    spec:
+      containers:
+        - name: {{ .Values.services.admin.name }}
+          image: "{{ .Values.global.imageRegistry }}{{ .Values.services.admin.image.repository }}:{{ .Values.services.admin.image.tag }}"
+          ports:
+            - containerPort: {{ .Values.services.admin.servicePort }}
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "{{ .Values.services.admin.env.SPRING_PROFILES_ACTIVE }}"
+            - name: DB_HOST
+              value: "{{ .Values.services.admin.env.DB_HOST }}"
+            - name: DB_PORT
+              value: "{{ .Values.services.admin.env.DB_PORT }}"
+            - name: NACOS_ADDR
+              value: "{{ .Values.services.admin.env.NACOS_ADDR }}"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.services.admin.name }}
+  namespace: {{ .Values.global.namespace }}
+spec:
+  selector:
+    app: {{ .Values.services.admin.name }}
+  ports:
+    - port: {{ .Values.services.admin.servicePort }}
+      targetPort: {{ .Values.services.admin.servicePort }}

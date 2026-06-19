@@ -1,0 +1,209 @@
+services:
+  # Nacos (注册中心 + 配置中心)
+  nacos:
+    image: nacos/nacos-server:v2.3.2
+    container_name: bp-nacos
+    environment:
+      MODE: standalone
+      PREFER_HOST_MODE: hostname
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+    networks:
+      - bp-network
+
+  # PostgreSQL (静态数据存储)
+  postgresql:
+    image: postgres:15
+    container_name: bp-postgresql
+    environment:
+      POSTGRES_DB: battery_pass
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scripts/init-postgresql.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - bp-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # TDengine (时序数据存储)
+  tdengine:
+    image: tdengine/tdengine:3.2.2.0
+    container_name: bp-tdengine
+    environment:
+      TAOS_DEFAULT_PASS: taosdata
+    ports:
+      - "6030:6030"
+      - "6041:6041"
+    volumes:
+      - tdengine_data:/var/lib/taos
+    networks:
+      - bp-network
+    healthcheck:
+      test: ["CMD", "taos", "-s", "show databases;"]
+      interval: 30s
+      timeout: 10s
+
+  # Redis (缓存 + 快照)
+  redis:
+    image: redis:7-alpine
+    container_name: bp-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - bp-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+
+  # RabbitMQ (消息队列 / 死信重试)
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: bp-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - bp-network
+
+  # MinIO (对象存储 / 历史数据和文档)
+  minio:
+    image: minio/minio:latest
+    container_name: bp-minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - bp-network
+
+  # Static Data Service (静态数据中台)
+  static-data-service:
+    build:
+      context: .
+      dockerfile: static-data-service/Dockerfile
+    container_name: bp-static-data
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: postgresql
+      DB_PORT: 5432
+      NACOS_ADDR: nacos:8848
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      nacos:
+        condition: service_started
+    networks:
+      - bp-network
+
+  # Dynamic Data Service (动态数据中台)
+  dynamic-data-service:
+    build:
+      context: .
+      dockerfile: dynamic-data-service/Dockerfile
+    container_name: bp-dynamic-data
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      REDIS_HOST: redis
+      TDENGINE_HOST: tdengine
+      MQTT_BROKER_URL: tcp://mqtt-broker:1883
+      NACOS_ADDR: nacos:8848
+    ports:
+      - "8082:8082"
+    depends_on:
+      tdengine:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nacos:
+        condition: service_started
+    networks:
+      - bp-network
+
+  # Collector API Gateway (统一数据采集接口)
+  collector-api-gateway:
+    build:
+      context: .
+      dockerfile: collector-api-gateway/Dockerfile
+    container_name: bp-api-gateway
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      NACOS_ADDR: nacos:8848
+    ports:
+      - "8080:8080"
+    depends_on:
+      nacos:
+        condition: service_started
+    networks:
+      - bp-network
+
+  # Admin Service (管理后台)
+  admin-service:
+    build:
+      context: .
+      dockerfile: admin-service/Dockerfile
+    container_name: bp-admin
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: postgresql
+      DB_PORT: 5432
+      NACOS_ADDR: nacos:8848
+    ports:
+      - "8083:8083"
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      nacos:
+        condition: service_started
+    networks:
+      - bp-network
+
+  # Prometheus + Grafana (监控)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: bp-prometheus
+    volumes:
+      - ./scripts/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - bp-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: bp-grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - bp-network
+
+volumes:
+  pgdata:
+  tdengine_data:
+  minio_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  bp-network:
+    driver: bridge

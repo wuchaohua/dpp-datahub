@@ -1,0 +1,6 @@
+apiVersion: v2
+name: battery-pass-data-collector
+description: Battery Passport Data Collection Middleware - Helm chart for Kubernetes deployment
+type: application
+version: 1.0.0
+appVersion: "1.0.0"

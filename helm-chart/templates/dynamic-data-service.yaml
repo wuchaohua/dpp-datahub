@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.services.dynamicData.name }}
+  namespace: {{ .Values.global.namespace }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.services.dynamicData.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.services.dynamicData.name }}
+    spec:
+      containers:
+        - name: {{ .Values.services.dynamicData.name }}
+          image: "{{ .Values.global.imageRegistry }}{{ .Values.services.dynamicData.image.repository }}:{{ .Values.services.dynamicData.image.tag }}"
+          ports:
+            - containerPort: {{ .Values.services.dynamicData.servicePort }}
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "{{ .Values.services.dynamicData.env.SPRING_PROFILES_ACTIVE }}"
+            - name: REDIS_HOST
+              value: "{{ .Values.services.dynamicData.env.REDIS_HOST }}"
+            - name: TDENGINE_HOST
+              value: "{{ .Values.services.dynamicData.env.TDENGINE_HOST }}"
+            - name: MQTT_BROKER_URL
+              value: "{{ .Values.services.dynamicData.env.MQTT_BROKER_URL }}"
+            - name: NACOS_ADDR
+              value: "{{ .Values.services.dynamicData.env.NACOS_ADDR }}"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.services.dynamicData.name }}
+  namespace: {{ .Values.global.namespace }}
+spec:
+  selector:
+    app: {{ .Values.services.dynamicData.name }}
+  ports:
+    - port: {{ .Values.services.dynamicData.servicePort }}
+      targetPort: {{ .Values.services.dynamicData.servicePort }}

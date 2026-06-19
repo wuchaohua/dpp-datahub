@@ -1,0 +1,94 @@
+global:
+  namespace: battery-pass
+  imageRegistry: ""
+  imagePullSecrets: []
+
+replicaCount: 1
+
+services:
+  staticData:
+    name: static-data-service
+    image:
+      repository: battery-pass/static-data-service
+      tag: latest
+      pullPolicy: IfNotPresent
+    servicePort: 8081
+    env:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: postgresql
+      DB_PORT: "5432"
+      NACOS_ADDR: nacos:8848
+
+  dynamicData:
+    name: dynamic-data-service
+    image:
+      repository: battery-pass/dynamic-data-service
+      tag: latest
+      pullPolicy: IfNotPresent
+    servicePort: 8082
+    env:
+      SPRING_PROFILES_ACTIVE: prod
+      REDIS_HOST: redis
+      TDENGINE_HOST: tdengine
+      MQTT_BROKER_URL: tcp://mqtt-broker:1883
+      NACOS_ADDR: nacos:8848
+
+  gateway:
+    name: collector-api-gateway
+    image:
+      repository: battery-pass/collector-api-gateway
+      tag: latest
+      pullPolicy: IfNotPresent
+    servicePort: 8080
+    env:
+      SPRING_PROFILES_ACTIVE: prod
+      NACOS_ADDR: nacos:8848
+
+  admin:
+    name: admin-service
+    image:
+      repository: battery-pass/admin-service
+      tag: latest
+      pullPolicy: IfNotPresent
+    servicePort: 8083
+    env:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: postgresql
+      DB_PORT: "5432"
+      NACOS_ADDR: nacos:8848
+
+infrastructure:
+  postgresql:
+    enabled: true
+    image: postgres:15
+    port: 5432
+    storageSize: 10Gi
+
+  tdengine:
+    enabled: true
+    image: tdengine/tdengine:3.2.2.0
+    port: 6041
+    storageSize: 50Gi
+
+  redis:
+    enabled: true
+    image: redis:7-alpine
+    port: 6379
+
+  nacos:
+    enabled: true
+    image: nacos/nacos-server:v2.3.2
+    port: 8848
+
+ingress:
+  enabled: false
+  host: battery-pass.local
+  tls: {}
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi

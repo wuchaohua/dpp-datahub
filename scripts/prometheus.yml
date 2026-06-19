@@ -1,0 +1,24 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: "static-data-service"
+    metrics_path: "/actuator/prometheus"
+    static_configs:
+      - targets: ["static-data-service:8081"]
+
+  - job_name: "dynamic-data-service"
+    metrics_path: "/actuator/prometheus"
+    static_configs:
+      - targets: ["dynamic-data-service:8082"]
+
+  - job_name: "collector-api-gateway"
+    metrics_path: "/actuator/prometheus"
+    static_configs:
+      - targets: ["collector-api-gateway:8080"]
+
+  - job_name: "admin-service"
+    metrics_path: "/actuator/prometheus"
+    static_configs:
+      - targets: ["admin-service:8083"]

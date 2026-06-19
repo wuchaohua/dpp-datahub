@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.services.staticData.name }}
+  namespace: {{ .Values.global.namespace }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.services.staticData.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.services.staticData.name }}
+    spec:
+      containers:
+        - name: {{ .Values.services.staticData.name }}
+          image: "{{ .Values.global.imageRegistry }}{{ .Values.services.staticData.image.repository }}:{{ .Values.services.staticData.image.tag }}"
+          imagePullPolicy: {{ .Values.services.staticData.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.services.staticData.servicePort }}
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "{{ .Values.services.staticData.env.SPRING_PROFILES_ACTIVE }}"
+            - name: DB_HOST
+              value: "{{ .Values.services.staticData.env.DB_HOST }}"
+            - name: DB_PORT
+              value: "{{ .Values.services.staticData.env.DB_PORT }}"
+            - name: NACOS_ADDR
+              value: "{{ .Values.services.staticData.env.NACOS_ADDR }}"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.services.staticData.name }}
+  namespace: {{ .Values.global.namespace }}
+spec:
+  selector:
+    app: {{ .Values.services.staticData.name }}
+  ports:
+    - port: {{ .Values.services.staticData.servicePort }}
+      targetPort: {{ .Values.services.staticData.servicePort }}

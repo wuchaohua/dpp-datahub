@@ -1,0 +1,16 @@
+﻿# Battery Pass Data ETL
+target/
+*.class
+*.jar
+*.war
+*.log
+.idea/
+*.iml
+.settings/
+.project
+.classpath
+.vscode/
+build/
+.DS_Store
+logs/
+application-local.yml
