@@ -15,12 +15,9 @@ public class SecurityConfig {
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers("/aas/**").permitAll()
-                        .pathMatchers("/api/v1/passport/**").permitAll()
-                        .pathMatchers("/actuator/health").permitAll()
-                        .anyExchange().authenticated()
+                        .pathMatchers("/**").permitAll()
+                        .anyExchange().permitAll()
                 )
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt())
                 .build();
     }
 }

@@ -1,0 +1,11 @@
+﻿target/
+.m2-repo/
+.mvn/
+node_modules/
+.git/
+helm-chart/
+*.md
+*.log
+.DS_Store
+docker-compose.yml
+scripts/

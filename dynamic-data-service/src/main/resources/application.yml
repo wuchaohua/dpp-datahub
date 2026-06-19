@@ -1,29 +1,12 @@
 spring:
   application:
     name: dynamic-data-service
-  profiles:
-    active: ${SPRING_PROFILES_ACTIVE:dev}
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
-  cloud:
-    nacos:
-      discovery:
-        server-addr: ${NACOS_ADDR:localhost:8848}
-      config:
-        server-addr: ${NACOS_ADDR:localhost:8848}
-        file-extension: yaml
-
 server:
   port: ${SERVER_PORT:8082}
-
-taos:
-  jdbc:
-    url: jdbc:TAOS-RS://${TDENGINE_HOST:localhost}:${TDENGINE_PORT:6041}/battery_pass
-    username: ${TDENGINE_USER:root}
-    password: ${TDENGINE_PASSWORD:taosdata}
-
 mqtt:
   enabled: ${MQTT_ENABLED:true}
   broker:
@@ -35,12 +18,10 @@ mqtt:
     telemetry: /bms/+/telemetry
     alarm: /bms/+/alarm
   qos: 1
-
 logging:
   level:
     io.batterypass: DEBUG
     org.springframework: INFO
-
 management:
   endpoints:
     web:

@@ -1,8 +1,6 @@
-﻿FROM maven:3.9-eclipse-temurin-17 AS builder
+FROM maven:3.9-eclipse-temurin-17 AS builder
 WORKDIR /app
-COPY pom.xml ./
-COPY collector-common ./collector-common/
-COPY collector-api-gateway ./collector-api-gateway/
+COPY . .
 RUN mvn clean package -pl collector-api-gateway -am -DskipTests -q
 
 FROM eclipse-temurin:17-jre-alpine

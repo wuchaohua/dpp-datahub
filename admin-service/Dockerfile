@@ -1,8 +1,6 @@
-﻿FROM maven:3.9-eclipse-temurin-17 AS builder
+FROM maven:3.9-eclipse-temurin-17 AS builder
 WORKDIR /app
-COPY pom.xml ./
-COPY collector-common ./collector-common/
-COPY admin-service ./admin-service/
+COPY . .
 RUN mvn clean package -pl admin-service -am -DskipTests -q
 
 FROM eclipse-temurin:17-jre-alpine
